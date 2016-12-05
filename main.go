@@ -1,11 +1,12 @@
 package main
 
 import (
+	. "github.com/Prabandham/trip_manager/controllers"
 	DB "github.com/Prabandham/trip_manager/db"
 	. "github.com/Prabandham/trip_manager/models"
 
-	"fmt"
-	"time"
+	"gopkg.in/gin-gonic/gin.v1"
+	//"fmt"
 )
 
 func main() {
@@ -21,56 +22,22 @@ func main() {
 	//CreateTrip()
 	//AddExpense()
 
-	var trip Trip
-	db.First(&trip)
+	//gin.SetMode(gin.ReleaseMode) This will set production mode
+	r := gin.Default()
+	LoadRoutes(r)
 
-	total := trip.TotalExpense()
-	fmt.Println(*total)
+	r.Run()
 }
 
-func SeedPeople() {
-	db := DB.Connection()
-	defer db.Close()
+func LoadRoutes(r *gin.Engine) {
+	//This is just to test if server is up and running.
+	r.GET("/ping", PingHandler)
+	r.POST("/login", LoginHandler)
 
-	person1 := Person{Name: "Prabandham Srinidhi", PhoneNumber: "9738912733"}
-	person2 := Person{Name: "Abhishek Murthy", PhoneNumber: "9986785453"}
-	person3 := Person{Name: "Krishna S", PhoneNumber: "9738912816"}
-	person4 := Person{Name: "Ashwin J", PhoneNumber: "9738107286"}
-	person5 := Person{Name: "Lohith B N", PhoneNumber: "9480114203"}
-
-	db.Create(&person1)
-	db.Create(&person2)
-	db.Create(&person3)
-	db.Create(&person4)
-	db.Create(&person5)
-}
-
-func CreateTrip() {
-	db := DB.Connection()
-	defer db.Close()
-
-	var people []Person
-	db.Find(&people)
-
-	trip := Trip{
-		Name:      "Pondycherry",
-		StartDate: time.Now(),
-		Location:  "Pondycherry",
-		People:    people,
+	//All these are application specific routes.
+	app := r.Group("/")
+	app.Use(AuthRequired)
+	{
+		app.GET("/trips", TripsIndex)
 	}
-	db.Create(&trip)
-}
-
-func AddExpense() {
-	db := DB.Connection()
-	defer db.Close()
-
-	var trip Trip
-	db.Last(&trip)
-
-	expense1 := Expense{Trip: trip, Spent: 3850, Description: "Bus Tickets", Label: "Travel"}
-	expense2 := Expense{Trip: trip, Spent: 500, Description: "While Smoking in bus stop", Label: "Ciggarates and Drinks"}
-
-	db.Create(&expense1)
-	db.Create(&expense2)
 }

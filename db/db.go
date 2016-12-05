@@ -14,6 +14,7 @@ func Connection() *gorm.DB {
 	if err != nil {
 		panic("failed to connect database")
 	}
+	cdb.LogMode(true)
 	db := &DB{db: cdb}
 	return db.db
 }
