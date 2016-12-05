@@ -27,3 +27,7 @@ This is a trip manager application.
 
 5. On completing a trip (setting a trip as done) It will divide the amount by number of 
    people in the trip and conclude.
+
+
+6. Refer this tutorial to setup JWT.
+    https://dinosaurscode.xyz/go/2016/06/17/golang-jwt-authentication/
