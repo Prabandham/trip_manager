@@ -8,7 +8,7 @@ import (
 )
 
 func SeedPeople() {
-	db := DB.Connection()
+	db := DB.Connection.New()
 	defer db.Close()
 
 	person1 := Person{Name: "Prabandham Srinidhi", PhoneNumber: "9738912733"}
@@ -25,7 +25,7 @@ func SeedPeople() {
 }
 
 func CreateTrip() {
-	db := DB.Connection()
+	db := DB.Connection.New()
 	defer db.Close()
 
 	var people []Person
@@ -41,7 +41,7 @@ func CreateTrip() {
 }
 
 func AddExpense() {
-	db := DB.Connection()
+	db := DB.Connection.New()
 	defer db.Close()
 
 	var trip Trip

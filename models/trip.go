@@ -18,8 +18,7 @@ type Trip struct {
 }
 
 func (trip *Trip) AssociatedPeople() *[]Person {
-	db := DB.Connection()
-	defer db.Close()
+	db := DB.Connection.New()
 
 	var people []Person
 	db.Model(&trip).Related(&people, "People")
@@ -27,8 +26,7 @@ func (trip *Trip) AssociatedPeople() *[]Person {
 }
 
 func (trip *Trip) TotalExpense() *int {
-	db := DB.Connection()
-	defer db.Close()
+	db := DB.Connection.New()
 
 	var totalExpense []int
 	db.Raw("select sum(spent) as sum from expenses where trip_id = ?", trip.ID).Pluck("sum", &totalExpense)

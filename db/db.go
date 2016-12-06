@@ -6,15 +6,20 @@ import (
 )
 
 type DB struct {
-	db *gorm.DB
 }
 
-func Connection() *gorm.DB {
-	cdb, err := gorm.Open("mysql", "root:root@/trip_manager?charset=utf8&parseTime=True&loc=Local")
+var Connection gorm.DB
+
+//This sets up a global variable with a Connection
+func Initialize() *gorm.DB {
+	db, err := gorm.Open("mysql", "root:root@/trip_manager?charset=utf8&parseTime=True&loc=Local")
 	if err != nil {
 		panic("failed to connect database")
 	}
-	cdb.LogMode(true)
-	db := &DB{db: cdb}
-	return db.db
+	db.LogMode(true)
+	db.DB().SetMaxIdleConns(10)
+	db.DB().SetMaxOpenConns(10000)
+
+	Connection = *db
+	return &Connection
 }
