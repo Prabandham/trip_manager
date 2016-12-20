@@ -1,58 +1,39 @@
 package main
 
 import (
-	. "github.com/Prabandham/trip_manager/controllers"
-	DB "github.com/Prabandham/trip_manager/db"
-	//. "github.com/Prabandham/trip_manager/models"
+	"github.com/Prabandham/trip_manager/db"
+	. "github.com/Prabandham/trip_manager/endpoints"
 
-	"gopkg.in/gin-gonic/gin.v1"
-	//"fmt"
+	"github.com/iris-contrib/middleware/logger"
+	"github.com/kataras/iris"
 )
 
 func main() {
-	db := DB.Initialize()
-	defer db.Close()
+	// Initialize iris to use logger
+	iris.Use(logger.New())
 
-	//All this has to move to config or seed file
-	//db := DB.Connection()
-	//defer db.Close()
+	//LoadSchema()
 
-	//The below things should run only once and is just for testing.
-	//db.DropTableIfExists(&Person{}, &Trip{}, &Expense{})
-	//db.AutoMigrate(&Person{}, &Trip{}, &Expense{})
+	// Initialize the database and set it in the context
+	db := db.Connection
+	db.Ping()
+	// This is going act as the routes.
+	LoadRoutes()
 
-	//DB indexes
-	//db.Model(&Person{}).AddUniqueIndex("idx_user_name", "name")
-	//db.Model(&Person{}).AddUniqueIndex("idx_phone_number", "phone_number")
-	//db.Model(&Person{}).AddIndex("idx_user_name_phone_number", "name", "phone_number")
-	//db.Model(&Trip{}).AddIndex("idx_name", "name")
-	//db.Model(&Trip{}).AddIndex("idx_location", "location")
-	//db.Model(&Trip{}).AddIndex("idx_start_date", "start_date")
-	//db.Model(&Expense{}).AddIndex("idx_trip_id", "trip_id")
-	//db.Model(&Expense{}).AddIndex("idx_spent", "spent")
-	//db.Model(&Expense{}).AddIndex("idx_label", "label")
-
-	//Seed data.
-	//SeedPeople()
-	//CreateTrip()
-	//AddExpense()
-
-	//gin.SetMode(gin.ReleaseMode) This will set production mode
-	r := gin.Default()
-	LoadRoutes(r)
-
-	r.Run()
+	// Default PORT
+	iris.Listen(":3000")
 }
 
-func LoadRoutes(r *gin.Engine) {
-	//This is just to test if server is up and running.
-	r.GET("/ping", PingHandler)
-	r.POST("/signup", LoginHandler)
+func LoadRoutes() {
+	iris.Get("/ping", Pong)
+	iris.Post("/register", RegisterUser)
+	iris.Post("/confirm", ConfirmUser)
 
-	//All these are application specific routes.
-	app := r.Group("/")
-	app.Use(AuthRequired())
-	{
-		app.GET("/trips", TripsIndex)
-	}
+	//These are all protected Routes
+	iris.Use(&AuthMiddleware{})
+	iris.Get("/trips", CurrentTrip)
+}
+
+func Pong(c *iris.Context) {
+	c.JSON(iris.StatusOK, map[string]string{"status": "Test !!"})
 }

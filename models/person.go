@@ -2,66 +2,46 @@ package models
 
 import (
 	"errors"
-
-	DB "github.com/Prabandham/trip_manager/db"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/Prabandham/trip_manager/db"
 )
 
+const (
+	PersonSchema string = `
+	CREATE TABLE people (
+		id int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+		user_name varchar(255),
+		phone_number varchar(10),
+		confirmation_code varchar(5),
+		confirmed varchar(3),
+		created_at varchar(255)
+	) ENGINE=InnoDB;
+`
+)
+
+var PersonIndexes = []string{`ALTER TABLE people ADD UNIQUE INDEX people_unique_phone (phone_number);`, `ALTER TABLE people ADD INDEX people_confirmed_phone (confirmed, phone_number);`}
+
+// Person - we will save created_at only when the person
+// confirms his code.
 type Person struct {
-	gorm.Model
-	Name        string `json:"name" binding:"required"`
-	PhoneNumber string `gorm:"not null;unique" json:"phone_number" binding:"required"`
+	Id               int    `db:"id"`
+	UserName         string `db:"user_name" json:"user_name"`
+	PhoneNumber      string `db:"phone_number" json:"phone_number"`
+	ConfirmationCode string `db:"confirmation_code" json:"-"`
+	Confirmed        string `db:"confirmed" json:"confirmed"`
+	CreatedAt        string `db:"created_at" json:"-"`
 }
 
-func (person *Person) Trips() *[]Trip {
-	db := DB.Connection.New()
-
-	var person_trip_ids []int
-	var trips []Trip
-
-	db.Raw("select trip_id from person_trips where person_id = ?", person.ID).Pluck("trip_id", &person_trip_ids)
-	db.Where("id in (?)", person_trip_ids).Find(&trips)
-
-	return &trips
-}
-
-func (person *Person) ActiveTrip() *Trip {
-	db := DB.Connection.New()
-
-	var trip_ids []int
-	var trip Trip
-
-	db.Raw("select id from trips as t left join person_trips as pt on pt.trip_id=t.id where pt.person_id = ?", person.ID).Pluck("id", &trip_ids)
-	db.Where("id in (?)", trip_ids).Last(&trip)
-
-	return &trip
-}
-
-func (person *Person) IsValid() (*Person, bool) {
-	db := DB.Connection.New()
-
-	var auth_person Person
-	if person.PhoneNumber != "" {
-		db.Where("phone_number = ?", person.PhoneNumber).First(&auth_person)
-		//If the user could not be found then NewRecord will be true
-		if db.NewRecord(auth_person) {
-			return nil, false
-		} else {
-			return &auth_person, true
-		}
+func (p *Person) Validate() (*Person, error) {
+	if p.PhoneNumber == "" {
+		return nil, errors.New("Phone Number not entered")
 	}
-	return nil, false
-}
+	var dbUser Person
+	var query_error error
 
-func (person *Person) Save() (*Person, error) {
-	db := DB.Connection.New()
-
-	var new_person Person
-	db.Where(&person).FirstOrCreate(&new_person)
-
-	if db.NewRecord(new_person) {
-		return nil, errors.New("Person Could not be saved !!")
+	if p.ConfirmationCode == "" {
+		query_error = db.Connection.Get(&dbUser, "SELECT * FROM people where people.phone_number=?", p.PhoneNumber)
+	} else {
+		query_error = db.Connection.Get(&dbUser, "SELECT * FROM people where people.phone_number=? and people.confirmation_code=?", p.PhoneNumber, p.ConfirmationCode)
 	}
-	return &new_person, nil
+	return &dbUser, query_error
 }
