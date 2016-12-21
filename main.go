@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/Prabandham/trip_manager/db"
 	. "github.com/Prabandham/trip_manager/endpoints"
 
 	"github.com/iris-contrib/middleware/logger"
@@ -14,9 +13,6 @@ func main() {
 
 	//LoadSchema()
 
-	// Initialize the database and set it in the context
-	db := db.Connection
-	db.Ping()
 	// This is going act as the routes.
 	LoadRoutes()
 
@@ -32,6 +28,8 @@ func LoadRoutes() {
 	//These are all protected Routes
 	iris.Use(&AuthMiddleware{})
 	iris.Get("/trips", CurrentTrip)
+	iris.Post("/create_trip", CreateTrip)
+	iris.Post("/add_buddies", AddBuddies)
 }
 
 func Pong(c *iris.Context) {

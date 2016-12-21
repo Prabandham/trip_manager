@@ -3,37 +3,27 @@
 package main
 
 import (
-	"github.com/Prabandham/trip_manager/db"
 	. "github.com/Prabandham/trip_manager/models"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
 )
 
 func LoadSchema() {
-	db.Connection.MustExec(`set foreign_key_checks=0;`)
+	db, _ := gorm.Open("mysql", "root:root@/trip_manager?charset=utf8&parseTime=True&loc=Local")
+	db.LogMode(true)
+	defer db.Close()
 
-	db.Connection.MustExec("drop table if exists people;")
-	db.Connection.MustExec("drop table if exists trips;")
-	db.Connection.MustExec("drop table if exists trip_people;")
-	db.Connection.MustExec("drop table if exists expenses;")
-	db.Connection.MustExec("drop table if exists moments;")
+	db.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(&Person{})
+	db.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(&Trip{})
+	db.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(&Expense{})
+	db.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(&Moment{})
 
-	db.Connection.MustExec(PersonSchema)
-	for _, index := range PersonIndexes {
-		db.Connection.MustExec(index)
-	}
-	db.Connection.MustExec(TripSchema)
-	for _, index := range TripIndexes {
-		db.Connection.MustExec(index)
-	}
-	db.Connection.MustExec(TripPeopleSchema)
-	for _, index := range TripPeopleIndexes {
-		db.Connection.MustExec(index)
-	}
-	db.Connection.MustExec(ExpenseSchema)
-	for _, index := range ExpenseIndexes {
-		db.Connection.MustExec(index)
-	}
-	db.Connection.MustExec(MomentsSchema)
-	for _, index := range MomentsIndexes {
-		db.Connection.MustExec(index)
-	}
+	db.Model(&Person{}).AddUniqueIndex("idx_person_phone_number", "phone_number")
+	db.Model(&Trip{}).AddIndex("idx_trip_destination", "destination")
+	db.Model(&Expense{}).AddIndex("idx_expense_person_id", "person_id")
+	db.Model(&Expense{}).AddIndex("idx_expense_trip_id", "trip_id")
+	db.Model(&Expense{}).AddIndex("idx_expense_trip_id_person_id", "trip_id", "person_id")
+	db.Model(&Moment{}).AddIndex("idx_moment_trip_id", "trip_id")
+	db.Model(&Moment{}).AddIndex("idx_moment_file_type", "file_type")
 }
