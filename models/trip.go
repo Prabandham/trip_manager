@@ -27,5 +27,4 @@ type TripPeople struct {
 
 func (TripPeople) TableName() string {
 	return "trip_people"
-
 }
